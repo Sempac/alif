@@ -2,7 +2,7 @@
 // Alif — application d'arabe pour Zeydoune.
 // Écrans : accueil, histoires, lettres jumelles, révision, test des lettres, espace parent.
 
-const VERSION = 'alif-v1.1';
+const VERSION = 'alif-v1.2';
 const HERO = 'Zeydoune';
 const KEY = 'alif-data';
 
@@ -338,9 +338,15 @@ function library() {
 // ───────────── Lecteur d'histoire ─────────────
 function parseScene(str) {
   const [bg, ...items] = str.split('|');
-  return `<div class="scene bg-${bg}">${items.map((it) => {
+  return `<div class="scene bg-${bg}">${Chars.decor(bg)}${items.map((it) => {
     const [e, x, y, s, anim] = it.trim().split(/\s+/);
-    return `<span class="it ${anim ? 'a-' + anim : ''}" style="left:${x}%;top:${y}%;--s:${s}">${e}</span>`;
+    const cls = anim ? 'a-' + anim : '';
+    if (e[0] === '@') {
+      // Personnage dessiné : y = position des pieds.
+      const c = Chars.render(e.slice(1));
+      return `<span class="it char ${cls}" style="left:${x}%;top:${y}%;--s:${s};--ar:${c.ar};--k:${c.k}">${c.svg}</span>`;
+    }
+    return `<span class="it ${cls}" style="left:${x}%;top:${y}%;--s:${s}">${e}</span>`;
   }).join('')}</div>`;
 }
 function parseSentence(str) {
@@ -348,12 +354,14 @@ function parseSentence(str) {
 }
 const clean = (w) => w.replace(/[«»!?؟.,،:…"]/g, '');
 
-function story(id) {
+function story(arg) {
+  const [id, forcePage] = String(arg).split('.'); // « chatte.2 » ouvre directement la page 3
   const s = STORIES.find((x) => x.id === id);
   if (!s) return library();
   const st = S.stories[id] || (S.stories[id] = { page: 0 });
   let p = Math.min(st.page || 0, s.pages.length - 1);
   if (st.done) p = 0;
+  if (forcePage) p = Math.min(+forcePage || 0, s.pages.length - 1);
   const token = stopFlag;
   let reading = 0; // numéro de la lecture karaoké en cours
 
