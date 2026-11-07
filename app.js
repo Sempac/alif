@@ -2,7 +2,7 @@
 // Alif — application d'arabe pour Zeydoune.
 // Écrans : accueil, histoires, lettres jumelles, révision, test des lettres, espace parent.
 
-const VERSION = 'alif-v1.2';
+const VERSION = 'alif-v1.3';
 const HERO = 'Zeydoune';
 const KEY = 'alif-data';
 
@@ -349,6 +349,24 @@ function parseScene(str) {
     return `<span class="it ${cls}" style="left:${x}%;top:${y}%;--s:${s}">${e}</span>`;
   }).join('')}</div>`;
 }
+// Illustration de la page (images/<histoire>/<n>.jpg), animée :
+// zoom/panoramique lent (sens différent à chaque page) + particules selon le décor.
+const FX = {
+  night: ['✦', 'a-twinkle', 18], nightsea: ['✦', 'a-twinkle', 14], sky: ['✦', 'fx-drift', 6],
+  sea: ['○', 'fx-bubble', 12], water: ['○', 'fx-bubble', 14],
+  garden: ['🦋', 'fx-flutter', 3], forest: ['🍃', 'fx-leaf', 6],
+  desert: ['·', 'fx-dust', 20], road: ['·', 'fx-dust', 16], market: ['·', 'fx-dust', 12],
+  island: ['🍃', 'fx-leaf', 4], house: ['✦', 'fx-drift', 5], city: ['·', 'fx-dust', 10], sunset: ['✦', 'fx-drift', 6],
+};
+function photoScene(id, p, scene) {
+  const bg = scene.split('|')[0];
+  const [ch, anim, n] = FX[bg] || ['✦', 'fx-drift', 6];
+  // Positions pseudo-aléatoires mais stables pour une page donnée.
+  const rnd = (k) => { const x = Math.sin((p + 1) * 97.3 + k * 13.7) * 10000; return x - Math.floor(x); };
+  const parts = Array.from({ length: n }, (_, k) =>
+    `<span class="fx ${anim}" style="left:${(rnd(k) * 96).toFixed(1)}%;top:${(rnd(k + 50) * 90).toFixed(1)}%;animation-delay:-${(rnd(k + 99) * 8).toFixed(1)}s;font-size:${(10 + rnd(k + 7) * 14).toFixed(0)}px">${ch}</span>`).join('');
+  return `<div class="scene photo"><img class="kb kb-${p % 4}" src="images/${id}/${p + 1}.jpg" alt="">${parts}</div>`;
+}
 function parseSentence(str) {
   return str.split(';').map((p) => { const [a, f] = p.split('|'); return { a, f }; });
 }
@@ -372,7 +390,7 @@ function story(arg) {
     let wi = 0;
     app.innerHTML = header(s.t, 'library') + `
       <div class="reader">
-        <div style="position:relative">${parseScene(scene)}
+        <div style="position:relative">${(window.IMAGES || {})[s.id] > p ? photoScene(s.id, p, scene) : parseScene(scene)}
           ${chap && fresh ? `<div class="chapter">Chapitre ${s.chapters.indexOf(chap) + 1}<br>${chap[0]}</div>` : ''}</div>
         <div class="text">${words.map((ws) => `<div class="sentence ar">${ws.map((w) => `<span class="w" data-i="${wi++}">${w.a}</span>`).join(' ')}</div>`).join('')}</div>
         <div class="controls">
