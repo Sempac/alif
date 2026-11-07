@@ -24,6 +24,9 @@ window.Chars = (() => {
     son3: { type: 'kid', skin: '#d39a6a', head: 'cap', headC: '#ffffff', robe: '#8fb8de', bottom: '#8fb8de' },
     boy: { type: 'kid', skin: '#e0b08a', head: 'cap', headC: '#ffffff', robe: '#a3c4e6', bottom: '#a3c4e6' },
     robber: { type: 'man', skin: '#b07a50', head: 'turban', headC: '#2b2b2b', beard: '#1b120c', robe: '#4a3b2a', sash: '#8b1e1e' },
+    johapoor: { type: 'man', skin: '#d9a57a', head: 'turban', headC: '#b9b2a6', beard: '#9a9a9a', robe: '#8a7a66', sash: '#5b4a36' },
+    johafine: { type: 'man', skin: '#d9a57a', head: 'turban', headC: '#ffffff', jewel: true, beard: '#9a9a9a', robe: '#1f7a6d', sash: '#f2c14e' },
+    shepherd: { type: 'kid', skin: '#c68b5e', head: 'cap', headC: '#e8572a', robe: '#c9a36a', bottom: '#c9a36a' },
     chief: { type: 'man', skin: '#b07a50', head: 'turban', headC: '#8b1e1e', beard: '#1b120c', robe: '#2b2b2b', sash: '#f2c14e' },
   };
 
