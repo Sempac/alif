@@ -317,3 +317,23 @@ table.conf .ar { font-size: 1.8rem; }
 .key .ar { font-size: 2.3rem; }
 .key.bad { border-color: var(--bad); background: #ffe3e3; animation: shake .4s; }
 .key:active { transform: translateY(3px); }
+
+/* ───── Phrases en ordre ───── */
+.t-ordre { background: linear-gradient(135deg, #ff5c8a, #b05cff); }
+.or-slots { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; width: 100%; max-width: 760px; min-height: 84px; }
+.oslot { min-width: 6rem; height: 76px; border: 4px dashed var(--purple); border-radius: 18px; background: #f1ecff; display: flex; align-items: center; justify-content: center; padding: 0 12px; transition: background .15s, transform .15s; }
+.oslot .ar { font-size: 2.6rem; line-height: 1; }
+.oslot.over { background: #e2d8ff; transform: scale(1.06); }
+.oslot.ok { border-style: solid; border-color: var(--good); background: #dff7e7; animation: pop .35s; }
+.oslot.bad { border-color: var(--bad); background: #ffe3e3; animation: shake .4s; }
+.oslot.next { border-color: var(--pink); animation: pulse 1.2s ease-in-out infinite; }
+.or-done { font-size: 2.8rem; color: var(--good); text-align: center; animation: pop .4s; line-height: 1.6; }
+.or-bank { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; width: 100%; max-width: 760px; }
+.otile { background: var(--card); border-radius: 18px; min-height: 76px; padding: 4px 20px; box-shadow: 0 5px 0 #0001; border: 4px solid transparent; touch-action: none; user-select: none; -webkit-user-select: none; }
+.otile .ar { font-size: 2.6rem; line-height: 1; pointer-events: none; }
+.otile.sel { border-color: var(--pink); background: #ffe8f0; transform: translateY(-4px); }
+.otile.hint { border-color: var(--orange); animation: pulse 1.2s ease-in-out infinite; }
+.otile.shake { animation: shake .4s; }
+.otile.lift { opacity: .35; }
+.otile.used { visibility: hidden; }
+.otile.ghost { position: fixed; z-index: 50; pointer-events: none; transform: translate(-50%, -60%) scale(1.08); box-shadow: 0 10px 20px #0003; border-color: var(--pink); margin: 0; text-align: center; }
