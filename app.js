@@ -492,6 +492,7 @@ function story(arg) {
           <h2>Histoire terminée, bravo ${HERO} !</h2>
           <div class="earned">${'⭐'.repeat(earned)}</div>
           ${gain ? `<div>+${gain} étoile${gain > 1 ? 's' : ''}</div>` : ''}
+          ${s.moral ? `<div class="panel moral">💡 <b>La leçon :</b> ${s.moral}</div>` : ''}
           <div class="btn-row">
             <button class="btn" data-go="library">Autre histoire</button>
             <button class="btn alt" data-go="story" data-arg="${s.id}">Relire</button>

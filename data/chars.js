@@ -15,6 +15,16 @@ window.Chars = (() => {
     icarus: { type: 'kid', skin: '#e8b48a', hair: 'curly', hairC: '#6b4423', robe: '#f4f1e8', short: true, sash: '#3a6fb0' },
     man: { type: 'man', skin: '#c68b5e', head: 'turban', headC: '#d9c9a3', beard: '#3b2a1a', robe: '#5b7f8f', sash: '#3b2a1a' },
     woman: { type: 'man', skin: '#d9a57a', head: 'scarf', headC: '#b5446e', robe: '#e08a3c', sash: '#b5446e' },
+    mother: { type: 'man', skin: '#c68b5e', head: 'scarf', headC: '#6d4c8f', robe: '#3b6e8f', sash: '#6d4c8f' },
+    girl: { type: 'kid', skin: '#d9a57a', head: 'scarf', headC: '#5b9bd5', robe: '#f2c14e', bottom: '#f2c14e' },
+    sheikh: { type: 'man', skin: '#d9a57a', head: 'turban', headC: '#ffffff', beard: '#eeeeee', robe: '#f4f1e8', sash: '#8b5a2b' },
+    father: { type: 'man', skin: '#d39a6a', head: 'cap', headC: '#ffffff', beard: '#2a1a10', robe: '#4f6d3a', sash: '#2a1a10' },
+    son1: { type: 'kid', skin: '#d39a6a', hair: 'short', hairC: '#1b120c', top: '#c0392b', bottom: '#4a4a4a' },
+    son2: { type: 'kid', skin: '#d39a6a', hair: 'curly', hairC: '#2b1d14', top: '#f2a93b', bottom: '#2d3e50' },
+    son3: { type: 'kid', skin: '#d39a6a', head: 'cap', headC: '#ffffff', robe: '#8fb8de', bottom: '#8fb8de' },
+    boy: { type: 'kid', skin: '#e0b08a', head: 'cap', headC: '#ffffff', robe: '#a3c4e6', bottom: '#a3c4e6' },
+    robber: { type: 'man', skin: '#b07a50', head: 'turban', headC: '#2b2b2b', beard: '#1b120c', robe: '#4a3b2a', sash: '#8b1e1e' },
+    chief: { type: 'man', skin: '#b07a50', head: 'turban', headC: '#8b1e1e', beard: '#1b120c', robe: '#2b2b2b', sash: '#f2c14e' },
   };
 
   // a = [bras gauche, bras droit] (0 = le long du corps, 180 = levé), l = jambes, rot = corps penché

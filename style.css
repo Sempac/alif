@@ -318,6 +318,8 @@ table.conf .ar { font-size: 1.8rem; }
 .key.bad { border-color: var(--bad); background: #ffe3e3; animation: shake .4s; }
 .key:active { transform: translateY(3px); }
 
+.panel.moral { background: #fff3d6; max-width: 560px; font-size: 1.1rem; }
+
 /* ───── Phrases en ordre ───── */
 .t-ordre { background: linear-gradient(135deg, #ff5c8a, #b05cff); }
 .or-slots { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; width: 100%; max-width: 760px; min-height: 84px; }
