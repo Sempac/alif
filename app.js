@@ -2,7 +2,7 @@
 // Alif — application d'arabe pour Zeydoune.
 // Écrans : accueil, histoires, lettres jumelles, révision, test des lettres, espace parent.
 
-const VERSION = 'alif-v1.4';
+const VERSION = 'alif-v1.5';
 const HERO = 'Zeydoune';
 const KEY = 'alif-data';
 
@@ -40,8 +40,15 @@ const Voice = {
   v: null,
   pick() {
     if (!('speechSynthesis' in window)) return;
-    const vs = speechSynthesis.getVoices().filter((v) => v.lang.toLowerCase().startsWith('ar'));
-    this.v = vs.find((v) => /ar.SA/i.test(v.lang)) || vs[0] || null;
+    const vs = this.list();
+    // Voix choisie dans l'espace parent, sinon une voix « améliorée » (téléchargée), sinon ar-SA.
+    this.v = vs.find((v) => v.name === S.voice)
+      || vs.find((v) => /enhanced|amélioré|premium|neural|natural/i.test(v.name))
+      || vs.find((v) => /ar.SA/i.test(v.lang)) || vs[0] || null;
+  },
+  list() {
+    if (!('speechSynthesis' in window)) return [];
+    return speechSynthesis.getVoices().filter((v) => v.lang.toLowerCase().startsWith('ar'));
   },
   stop() { if ('speechSynthesis' in window) speechSynthesis.cancel(); },
   // onWord(charIndex) : appelé à chaque mot prononcé, si la voix le signale.
@@ -546,8 +553,9 @@ function dashboard() {
         : '<div class="muted">Aucune confusion enregistrée pour l’instant.</div>'}</div>
     <div class="panel"><h3>Histoires</h3><table class="conf">${stories}</table></div>
     <div class="panel"><h3>Voix</h3>
-      ${Voice.v ? `<div>Voix arabe : <b>${Voice.v.name}</b> (${Voice.v.lang})</div>`
-        : '<div class="warn">Aucune voix arabe trouvée. Sur l’iPad : Réglages › Accessibilité › Contenu énoncé › Voix › Arabe, puis télécharger une voix (Majed, par exemple).</div>'}
+      ${Voice.v ? `<div class="row">Voix arabe : <select id="voiceSel">${Voice.list().map((v) =>
+          `<option ${v === Voice.v ? 'selected' : ''}>${v.name}</option>`).join('')}</select></div>` : ''}
+      <div class="muted" style="margin-top:8px">Pour une meilleure voix : Réglages de l’iPad › Accessibilité › Contenu énoncé › Voix › Arabe › télécharger la version « améliorée », puis rouvrir l’app et la choisir ici.</div>
       <div class="row">Vitesse <input type="range" id="rate" min="0.4" max="1.1" step="0.05" value="${S.rate}"> <span id="rateV">${S.rate}</span>
         <button class="btn alt" id="tryVoice">🔊 Essayer</button></div></div>
     <div class="panel"><h3>Réglages</h3>
@@ -556,6 +564,9 @@ function dashboard() {
       <div class="muted" style="margin-top:10px">Version ${VERSION} · données gardées sur cet appareil</div></div>`;
   $('#rate').oninput = (e) => { S.rate = +e.target.value; $('#rateV').textContent = S.rate; save(); };
   $('#tryVoice').onclick = () => Voice.say('ذَهَبَ زَيْدُونُ إِلَى الْحَدِيقَةِ');
+  if ($('#voiceSel')) $('#voiceSel').onchange = (e) => {
+    S.voice = e.target.value; save(); Voice.pick(); Voice.say('ذَهَبَ زَيْدُونُ إِلَى الْحَدِيقَةِ');
+  };
   $('#newPin').onclick = () => { S.pin = null; parentOk = false; save(); parent(); };
   let armed = false;
   $('#reset').onclick = (e) => {
