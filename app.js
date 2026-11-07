@@ -2,7 +2,7 @@
 // Alif — application d'arabe pour Zeydoune.
 // Écrans : accueil, histoires, lettres jumelles, révision, test des lettres, espace parent.
 
-const VERSION = 'alif-v1';
+const VERSION = 'alif-v1.1';
 const HERO = 'Zeydoune';
 const KEY = 'alif-data';
 
@@ -18,7 +18,7 @@ const ar = (t, cls = '') => `<span class="ar ${cls}">${t}</span>`;
 // ───────────── Données sauvegardées (sur l'iPad) ─────────────
 const S = load();
 function load() {
-  const d = { letters: {}, conf: {}, stories: {}, stars: 0, testDone: false, pin: null, rate: 0.75 };
+  const d = { letters: {}, conf: {}, stories: {}, stars: 0, testDone: false, pin: null, rate: 0.75, msPerLetter: 75 };
   try { return Object.assign(d, JSON.parse(localStorage.getItem(KEY)) || {}); } catch { return d; }
 }
 function save() { localStorage.setItem(KEY, JSON.stringify(S)); }
@@ -44,7 +44,8 @@ const Voice = {
     this.v = vs.find((v) => /ar.SA/i.test(v.lang)) || vs[0] || null;
   },
   stop() { if ('speechSynthesis' in window) speechSynthesis.cancel(); },
-  say(text, rate = S.rate) {
+  // onWord(charIndex) : appelé à chaque mot prononcé, si la voix le signale.
+  say(text, rate = S.rate, onWord) {
     return new Promise((res) => {
       if (!('speechSynthesis' in window)) return res();
       if (!this.v) this.pick();
@@ -56,6 +57,7 @@ const Voice = {
       const t = setTimeout(() => fin(), 1500 + text.length * 220 / rate);
       const fin = () => { if (!done) { done = true; clearTimeout(t); res(); } };
       u.onend = fin; u.onerror = fin;
+      if (onWord) u.onboundary = (e) => { if (e.name !== 'sentence') onWord(e.charIndex); };
       speechSynthesis.speak(u);
     });
   },
@@ -383,23 +385,55 @@ function story(id) {
     // L'arabe se lit de droite à gauche : ◀ avance, ▶ recule.
     $('#prev').onclick = () => { if (p > 0) { p--; turn(); } };
     $('#next').onclick = () => { if (p < s.pages.length - 1) { p++; turn(); } else finish(); };
-    $('#listen').onclick = () => karaoke(flat);
+    $('#listen').onclick = () => karaoke(words);
   };
   const turn = () => {
     reading++; Voice.stop(); closePop();
     st.page = p; save(); render(true);
   };
-  async function karaoke(flat) {
+  // Lecture fluide : chaque phrase est dite d'un seul tenant (pas de coupure entre les mots).
+  // Le mot surligné suit la voix si elle signale ses mots (onboundary),
+  // sinon il avance selon une estimation de durée, recalée après chaque phrase.
+  async function karaoke(words) {
     const me = ++reading; closePop();
     const els = $$('.w');
-    for (let k = 0; k < flat.length; k++) {
+    const mark = (k) => { els.forEach((x) => x.classList.remove('on')); if (k >= 0) els[k].classList.add('on'); };
+    let base = 0; // index du premier mot de la phrase dans la page
+    for (const ws of words) {
       if (me !== reading || token !== stopFlag) return;
-      els.forEach((x) => x.classList.remove('on'));
-      els[k].classList.add('on');
+      const text = ws.map((w) => w.a).join(' ');
+      const starts = []; let pos = 0;
+      ws.forEach((w) => { starts.push(pos); pos += w.a.length + 1; });
+      // Poids d'un mot = ses lettres (les voyelles écrites ne rallongent presque pas la lecture).
+      const weights = ws.map((w) => clean(w.a).replace(/[ً-ْٰ]/g, '').length || 1);
+      const total = weights.reduce((a, b) => a + b, 0);
+      const est = total * S.msPerLetter / S.rate;
+      let byVoice = false, cur = -1;
+      const show = (k) => { if (k !== cur && me === reading) { cur = k; mark(base + k); } };
+      show(0);
+      const t0 = Date.now();
+      const timer = setInterval(() => {
+        if (byVoice) return;
+        const f = (Date.now() - t0) / est;
+        let acc = 0, k = 0;
+        while (k < ws.length - 1 && (acc + weights[k]) / total <= f) { acc += weights[k]; k++; }
+        show(k);
+      }, 60);
+      const onWord = (ci) => {
+        byVoice = true;
+        let k = 0; while (k < starts.length - 1 && starts[k + 1] <= ci) k++;
+        show(k);
+      };
       // Durée minimale : le surlignage reste visible même si la voix échoue.
-      await Promise.all([Voice.say(clean(flat[k].a)), new Promise((r) => setTimeout(r, 450))]);
+      await Promise.all([Voice.say(text, S.rate, onWord), new Promise((r) => setTimeout(r, total * 40))]);
+      clearInterval(timer);
+      // Recalage de la vitesse estimée sur la durée réelle de la phrase.
+      const real = Date.now() - t0;
+      if (real > 600 && real < est * 3) { S.msPerLetter = Math.round(0.6 * S.msPerLetter + 0.4 * real * S.rate / total); save(); }
+      base += ws.length;
+      await new Promise((r) => setTimeout(r, 250)); // petite respiration entre deux phrases
     }
-    if (me === reading) els.forEach((x) => x.classList.remove('on'));
+    if (me === reading) mark(-1);
   }
   function finish() {
     const qs = (s.q || []).map(([question, opts, a]) => {
