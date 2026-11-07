@@ -2,7 +2,7 @@
 // Alif — application d'arabe pour Zeydoune.
 // Écrans : accueil, histoires, lettres jumelles, révision, test des lettres, espace parent.
 
-const VERSION = 'alif-v1.5';
+const VERSION = 'alif-v1.6';
 const HERO = 'Zeydoune';
 const KEY = 'alif-data';
 
@@ -42,9 +42,15 @@ const Voice = {
     if (!('speechSynthesis' in window)) return;
     const vs = this.list();
     // Voix choisie dans l'espace parent, sinon une voix « améliorée » (téléchargée), sinon ar-SA.
-    this.v = vs.find((v) => v.name === S.voice)
-      || vs.find((v) => /enhanced|amélioré|premium|neural|natural/i.test(v.name))
+    // L'iPad donne parfois le même nom à la voix normale et à la Premium : on compare l'identifiant.
+    const q = this.quality;
+    this.v = vs.find((v) => v.voiceURI === S.voice)
+      || vs.slice().sort((a, b) => q(b) - q(a)).find((v) => q(v) > 0)
       || vs.find((v) => /ar.SA/i.test(v.lang)) || vs[0] || null;
+  },
+  quality(v) {
+    const s = v.voiceURI + ' ' + v.name;
+    return /premium/i.test(s) ? 2 : /enhanced|amélior|neural|natural/i.test(s) ? 1 : 0;
   },
   list() {
     if (!('speechSynthesis' in window)) return [];
@@ -554,8 +560,9 @@ function dashboard() {
     <div class="panel"><h3>Histoires</h3><table class="conf">${stories}</table></div>
     <div class="panel"><h3>Voix</h3>
       ${Voice.v ? `<div class="row">Voix arabe : <select id="voiceSel">${Voice.list().map((v) =>
-          `<option ${v === Voice.v ? 'selected' : ''}>${v.name}</option>`).join('')}</select></div>` : ''}
-      <div class="muted" style="margin-top:8px">Pour une meilleure voix : Réglages de l’iPad › Accessibilité › Contenu énoncé › Voix › Arabe › télécharger la version « améliorée », puis rouvrir l’app et la choisir ici.</div>
+          `<option value="${v.voiceURI}" ${v === Voice.v ? 'selected' : ''}>${v.name} · ${['normale', 'améliorée', '⭐ Premium'][Voice.quality(v)]} (${v.lang})</option>`).join('')}</select></div>
+      <div class="muted" style="font-size:.8em;word-break:break-all">${Voice.v.voiceURI}</div>` : ''}
+      <div class="muted" style="margin-top:8px">Pour une meilleure voix : Réglages de l’iPad › Accessibilité › Lire et énoncer › Voix › Arabe › télécharger une voix « Premium », puis fermer et rouvrir l’app et la choisir ici.</div>
       <div class="row">Vitesse <input type="range" id="rate" min="0.4" max="1.1" step="0.05" value="${S.rate}"> <span id="rateV">${S.rate}</span>
         <button class="btn alt" id="tryVoice">🔊 Essayer</button></div></div>
     <div class="panel"><h3>Réglages</h3>
