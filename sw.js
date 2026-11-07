@@ -1,6 +1,6 @@
 // Cache de l'application pour qu'elle s'ouvre sans internet.
 // Changer VERSION quand la liste SHELL change (et VERSION dans app.js).
-const VERSION = 'alif-v3';
+const VERSION = 'alif-v4';
 const SHELL = [
   './',
   'index.html',
@@ -10,6 +10,8 @@ const SHELL = [
   'data/stories.js',
   'data/chars.js',
   'data/images.js',
+  'data/words.js',
+  'motus.js',
   'manifest.webmanifest',
   'icons/icon.svg',
   'icons/icon-192.png',

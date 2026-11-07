@@ -2,7 +2,7 @@
 // Alif — application d'arabe pour Zeydoune.
 // Écrans : accueil, histoires, lettres jumelles, révision, test des lettres, espace parent.
 
-const VERSION = 'alif-v1.3';
+const VERSION = 'alif-v1.4';
 const HERO = 'Zeydoune';
 const KEY = 'alif-data';
 
@@ -113,6 +113,7 @@ function home() {
       <button class="tile t-twins" data-go="twins"><span>👯</span>Lettres jumelles</button>
       <button class="tile t-review" data-go="review"><span>🔁</span>Révision<small>les lettres à retravailler</small></button>
       <button class="tile t-test" data-go="test"><span>🎯</span>Test des lettres${S.testDone ? '' : ' <em class="badge-new">à faire</em>'}</button>
+      <button class="tile t-motus" data-go="motus"><span>🧩</span>Mots à trous<small>trouve les lettres qui manquent</small></button>
     </div>`;
 }
 
@@ -565,7 +566,7 @@ function dashboard() {
   };
 }
 
-const ROUTES = { home, library, story, twins, twinSession, review, test, parent };
+const ROUTES = { home, library, story, twins, twinSession, review, test, parent, motus, motusPlay };
 
 // ───────────── Démarrage ─────────────
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js');

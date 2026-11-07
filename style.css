@@ -285,3 +285,35 @@ table.conf .ar { font-size: 1.8rem; }
   .lgrid { grid-template-columns: repeat(4, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+
+/* ───── Mots à trous ───── */
+.t-motus { background: linear-gradient(135deg, #3cc46b, #22b3a2); }
+.levels { display: grid; gap: 12px; }
+.card.level { display: flex; align-items: center; gap: 16px; text-align: left; }
+.card.level.locked { opacity: .45; }
+.lvl-n { width: 52px; height: 52px; border-radius: 50%; background: var(--purple); color: #fff; font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex: none; }
+.lvl-t { flex: 1; font-size: 1.1rem; }
+.lvl-b { color: var(--teal); font-size: .9rem; }
+.quiz.mt { gap: 12px; }
+.mt-img { font-size: 7rem; line-height: 1.1; animation: pop .4s; }
+.mt-scene { width: 100%; max-width: 640px; }
+.mt-scene .scene { aspect-ratio: 16 / 7; }
+.mt-word { font-size: 4.4rem; line-height: 1.5; text-align: center; min-height: 1.5em; }
+.mt-word.sent { font-size: 2.6rem; line-height: 2; }
+.mt-word.win .mt-text { color: var(--good); }
+.mt-word.lose .mt-text { color: var(--orange); }
+.slot { display: inline-block; min-width: .9em; border: 4px dashed var(--purple); border-radius: 14px; margin: 0 4px; vertical-align: middle; line-height: 1.25; text-align: center; background: #f1ecff; }
+.slot.cur { border-color: var(--pink); animation: pulse 1.2s ease-in-out infinite; }
+.slot.ok { border-style: solid; border-color: var(--good); background: #dff7e7; animation: none; }
+.slot.late { border-style: solid; border-color: var(--orange); background: #fff0dd; }
+.mt-fr { color: var(--muted); font-size: 1.1rem; display: flex; align-items: center; gap: 10px; }
+.round.small { width: 44px; height: 44px; font-size: 1.2rem; }
+.timer { width: 100%; max-width: 700px; height: 22px; background: #0000000f; border-radius: 12px; position: relative; overflow: hidden; }
+.timer div { height: 100%; background: var(--teal); border-radius: 12px; transition: width .1s linear; }
+.timer div.hurry { background: var(--bad); }
+.timer span { position: absolute; right: 10px; top: 0; font-size: .85rem; line-height: 22px; }
+.kbd { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; width: 100%; max-width: 760px; }
+.key { background: var(--card); border-radius: 14px; min-height: 64px; box-shadow: 0 4px 0 #0001; border: 3px solid transparent; }
+.key .ar { font-size: 2.3rem; }
+.key.bad { border-color: var(--bad); background: #ffe3e3; animation: shake .4s; }
+.key:active { transform: translateY(3px); }
