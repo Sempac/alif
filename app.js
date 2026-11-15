@@ -2,7 +2,7 @@
 // Alif — application d'arabe pour Zeydoune.
 // Écrans : accueil, histoires, lettres jumelles, révision, test des lettres, espace parent.
 
-const VERSION = 'alif-v1.9';
+const VERSION = 'alif-v2.0';
 const HERO = 'Zeydoune';
 const KEY = 'alif-data';
 
@@ -75,7 +75,13 @@ const Voice = {
     this.el.src = URL.createObjectURL(new Blob([b], { type: 'audio/wav' }));
     this.el.play().catch(() => {});
   },
+  // Voix enregistrée choisie dans l'espace parent (sinon la première).
+  rec() {
+    const vs = window.VOICES || [];
+    return (vs.find((v) => v.id === S.recVoice) || vs[0] || {}).id;
+  },
   async url(k) {
+    k = `${this.rec()}/${k}`;
     if (!this.urls[k]) {
       const r = await fetch(`audio/${k}.mp3`);
       if (!r.ok) throw new Error('audio absent');
@@ -111,7 +117,7 @@ const Voice = {
   // onWord(charIndex) : appelé à chaque mot prononcé, si la voix le signale.
   async say(text, rate = S.rate, onWord) {
     text = text.trim();
-    const marks = (window.AUDIO || {})[audioKey(text)];
+    const marks = ((window.AUDIO || {})[this.rec()] || {})[audioKey(text)];
     if (marks) {
       try { return await this.play(text, marks, rate, onWord); } catch (e) { /* hors ligne ou bloqué : voix de l'iPad */ }
     }
@@ -629,6 +635,8 @@ function dashboard() {
         : '<div class="muted">Aucune confusion enregistrée pour l’instant.</div>'}</div>
     <div class="panel"><h3>Histoires</h3><table class="conf">${stories}</table></div>
     <div class="panel"><h3>Voix</h3>
+      <div class="row">Voix des histoires : <select id="recSel">${(window.VOICES || []).map((v) =>
+          `<option value="${v.id}" ${v.id === Voice.rec() ? 'selected' : ''}>${v.label}</option>`).join('')}</select></div>
       ${Voice.v ? `<div class="row">Voix arabe : <select id="voiceSel">${Voice.list().map((v) =>
           `<option value="${v.voiceURI}" ${v === Voice.v ? 'selected' : ''}>${v.name} · ${['normale', 'améliorée', '⭐ Premium'][Voice.quality(v)]} (${v.lang})</option>`).join('')}</select></div>
       <div class="muted" style="font-size:.8em;word-break:break-all">${Voice.v.voiceURI}</div>` : ''}
@@ -641,6 +649,7 @@ function dashboard() {
       <div class="muted" style="margin-top:10px">Version ${VERSION} · données gardées sur cet appareil</div></div>`;
   $('#rate').oninput = (e) => { S.rate = +e.target.value; $('#rateV').textContent = S.rate; save(); };
   $('#tryVoice').onclick = () => Voice.say('ذَهَبَ زَيْدُونُ إِلَى الْحَدِيقَةِ');
+  $('#recSel').onchange = (e) => { S.recVoice = e.target.value; save(); Voice.say('ذَهَبَ زَيْدُونُ إِلَى الْحَدِيقَةِ'); };
   if ($('#voiceSel')) $('#voiceSel').onchange = (e) => {
     S.voice = e.target.value; save(); Voice.pick(); Voice.tts('ذَهَبَ زَيْدُونُ إِلَى الْحَدِيقَةِ', S.rate);
   };

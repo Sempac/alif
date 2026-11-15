@@ -14,8 +14,13 @@ from pathlib import Path
 import edge_tts
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / "audio"
-MARKS = ROOT / "voix" / "marks.json"
+# Voix proposées dans l'espace parent : id → (voix Edge, nom affiché). La première = par défaut.
+VOICES = {
+    "zariyah": ("ar-SA-ZariyahNeural", "Zariyah (femme)"),
+    "hamed": ("ar-SA-HamedNeural", "Hamed (homme)"),
+    "fatima": ("ar-AE-FatimaNeural", "Fatima (femme)"),
+    "hamdan": ("ar-AE-HamdanNeural", "Hamdan (homme)"),
+}
 TASHKEEL = re.compile(r"[ً-ْٰ]")
 PUNCT = re.compile(r"[«»\"“”!?؟.,،:…]")
 
@@ -46,8 +51,8 @@ def align(text, bounds):
     return marks
 
 
-async def one(item, voice, rate, sem, marks):
-    path = OUT / f"{item['h']}.mp3"
+async def one(item, voice, rate, sem, marks, out):
+    path = out / f"{item['h']}.mp3"
     async with sem:
         for essai in range(3):
             try:
@@ -72,31 +77,36 @@ async def one(item, voice, rate, sem, marks):
 
 async def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--voix", default="ar-SA-ZariyahNeural")
     ap.add_argument("--vitesse", default="-15%")
     ap.add_argument("--tout", action="store_true", help="tout régénérer")
     a = ap.parse_args()
 
     items = json.loads((ROOT / "voix" / "textes.json").read_text("utf-8"))
-    OUT.mkdir(exist_ok=True)
-    marks = {} if a.tout or not MARKS.exists() else json.loads(MARKS.read_text("utf-8"))
-    todo = [x for x in items if a.tout or x["h"] not in marks or not (OUT / f"{x['h']}.mp3").exists()]
-    print(f"{len(items)} textes, {len(todo)} à générer avec {a.voix}")
-
-    sem = asyncio.Semaphore(6)
-    res = await asyncio.gather(*(one(x, a.voix, a.vitesse, sem, marks) for x in todo))
-
-    # On ne garde que les textes encore utilisés.
     keep = {x["h"] for x in items}
-    marks = {h: m for h, m in marks.items() if h in keep}
-    for f in OUT.glob("*.mp3"):
-        if f.stem not in keep:
-            f.unlink()
-    MARKS.write_text(json.dumps(marks, separators=(",", ":")), "utf-8")
+    allmarks = {}
+    for vid, (voice, label) in VOICES.items():
+        out = ROOT / "audio" / vid
+        out.mkdir(parents=True, exist_ok=True)
+        mf = ROOT / "voix" / f"marks-{vid}.json"
+        marks = {} if a.tout or not mf.exists() else json.loads(mf.read_text("utf-8"))
+        todo = [x for x in items if a.tout or x["h"] not in marks or not (out / f"{x['h']}.mp3").exists()]
+        print(f"{label} : {len(todo)} / {len(items)} à générer")
+        sem = asyncio.Semaphore(6)
+        res = await asyncio.gather(*(one(x, voice, a.vitesse, sem, marks, out) for x in todo))
+        # On ne garde que les textes encore utilisés.
+        marks = {h: m for h, m in marks.items() if h in keep}
+        for f in out.glob("*.mp3"):
+            if f.stem not in keep:
+                f.unlink()
+        mf.write_text(json.dumps(marks, separators=(",", ":")), "utf-8")
+        allmarks[vid] = marks
+        print(f"  OK : {sum(res)} générés, {len(res) - sum(res)} échecs")
+    voices = [{"id": vid, "label": label} for vid, (_, label) in VOICES.items()]
     (ROOT / "data" / "audio.js").write_text(
-        "// Fait par tools/make_audio.py : clé du texte → [[index du mot, début en ms], ...]\n"
-        f"window.AUDIO = {json.dumps(marks, separators=(',', ':'))};\n", "utf-8")
-    print(f"OK : {sum(res)} générés, {len(res) - sum(res)} échecs, {len(marks)} au total")
+        "// Fait par tools/make_audio.py. VOICES : voix au choix (la 1re par défaut).\n"
+        "// AUDIO[voix][clé du texte] = [[index du mot, début en ms], ...]\n"
+        f"window.VOICES = {json.dumps(voices, ensure_ascii=False)};\n"
+        f"window.AUDIO = {json.dumps(allmarks, separators=(',', ':'))};\n", "utf-8")
 
 
 asyncio.run(main())
