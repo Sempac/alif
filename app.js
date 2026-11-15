@@ -2,7 +2,7 @@
 // Alif — application d'arabe pour Zeydoune.
 // Écrans : accueil, histoires, lettres jumelles, révision, test des lettres, espace parent.
 
-const VERSION = 'alif-v1.8';
+const VERSION = 'alif-v1.9';
 const HERO = 'Zeydoune';
 const KEY = 'alif-data';
 
@@ -91,8 +91,8 @@ const Voice = {
     if (me !== this.n) return;
     const el = this.el;
     el.pause(); el.src = src;
-    // Vitesse 0,75 (réglage par défaut) = voix telle qu'enregistrée.
-    el.playbackRate = Math.min(1.6, Math.max(0.5, rate / 0.75));
+    // Vitesse 0,75 (réglage par défaut) = voix enregistrée ralentie à 80 % (jugée trop rapide le 15/11).
+    el.playbackRate = Math.min(1.6, Math.max(0.5, 0.8 * rate / 0.75));
     el.preservesPitch = el.webkitPreservesPitch = true;
     const starts = []; let pos = 0;
     text.split(' ').forEach((w) => { starts.push(pos); pos += w.length + 1; });
