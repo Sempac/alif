@@ -1,4 +1,4 @@
-"""Génère la voix des histoires avec une voix neuronale gratuite (Microsoft Edge, sans compte).
+﻿"""Génère la voix des histoires avec une voix neuronale gratuite (Microsoft Edge, sans compte).
 
 Lit voix/textes.json (fait par tools/make_audio.js), crée audio/<clé>.mp3 pour chaque
 texte manquant et écrit data/audio.js = { clé: [[index du mot, début en ms], ...] }
@@ -77,7 +77,7 @@ async def one(item, voice, rate, sem, marks, out):
 
 async def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--vitesse", default="-15%")
+    ap.add_argument("--vitesse", default="-30%")
     ap.add_argument("--tout", action="store_true", help="tout régénérer")
     a = ap.parse_args()
 

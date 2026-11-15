@@ -2,7 +2,7 @@
 // Alif — application d'arabe pour Zeydoune.
 // Écrans : accueil, histoires, lettres jumelles, révision, test des lettres, espace parent.
 
-const VERSION = 'alif-v2.1';
+const VERSION = 'alif-v2.2';
 const HERO = 'Zeydoune';
 const KEY = 'alif-data';
 
@@ -58,61 +58,72 @@ const Voice = {
   },
   stop() {
     this.n++;
-    if (this.el) this.el.pause();
+    if (this.src) { try { this.src.stop(); } catch { /* déjà arrêtée */ } this.src = null; }
     if ('speechSynthesis' in window) speechSynthesis.cancel();
   },
-  // ── Voix enregistrée (audio/<clé>.mp3, voix neuronale, cf. tools/make_audio.py) ──
-  n: 0, el: null, urls: {},
-  // L'iPad n'autorise le son qu'après un toucher : on « débloque » le lecteur au premier toucher.
+  // ── Voix enregistrée (audio/<voix>/<clé>.mp3, voix neuronale, cf. tools/make_audio.py) ──
+  // Lue avec Web Audio : une fois débloqué par un toucher, l'iPad laisse lire toutes les
+  // phrases à la suite (un lecteur <audio> était bloqué dès la 2e phrase).
+  n: 0, src: null, bufs: {},
+  ctx() {
+    if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state !== 'running') actx.resume().catch(() => {});
+    return actx;
+  },
   unlock() {
-    if (this.el) return;
-    this.el = new Audio();
-    const b = new Uint8Array(44 + 800); const d = new DataView(b.buffer);
-    [[0, 'RIFF'], [8, 'WAVEfmt '], [36, 'data']].forEach(([o, s]) => [...s].forEach((c, i) => d.setUint8(o + i, c.charCodeAt(0))));
-    d.setUint32(4, 36 + 800, true); d.setUint32(16, 16, true); d.setUint16(20, 1, true); d.setUint16(22, 1, true);
-    d.setUint32(24, 8000, true); d.setUint32(28, 8000, true); d.setUint16(32, 1, true); d.setUint16(34, 8, true); d.setUint32(40, 800, true);
-    b.fill(128, 44);
-    this.el.src = URL.createObjectURL(new Blob([b], { type: 'audio/wav' }));
-    this.el.play().catch(() => {});
+    try {
+      // Son même si l'iPad est en mode silencieux (iPadOS 16.4+).
+      if (navigator.audioSession) navigator.audioSession.type = 'playback';
+      const c = this.ctx(), s = c.createBufferSource();
+      s.buffer = c.createBuffer(1, 1, 22050); s.connect(c.destination); s.start(0);
+    } catch { /* pas de Web Audio : voix de l'iPad */ }
   },
   // Voix enregistrée choisie dans l'espace parent (sinon la première).
   rec() {
     const vs = window.VOICES || [];
     return (vs.find((v) => v.id === S.recVoice) || vs[0] || {}).id;
   },
-  async url(k) {
+  async buffer(k) {
     k = `${this.rec()}/${k}`;
-    if (!this.urls[k]) {
+    if (!this.bufs[k]) {
       const r = await fetch(`audio/${k}.mp3`);
       if (!r.ok) throw new Error('audio absent');
-      this.urls[k] = URL.createObjectURL(await r.blob());
+      const data = await r.arrayBuffer();
+      // Ancien Safari : decodeAudioData ne rend pas de promesse.
+      this.bufs[k] = await new Promise((ok, ko) => this.ctx().decodeAudioData(data, ok, ko));
     }
-    return this.urls[k];
+    return this.bufs[k];
   },
   async play(text, marks, rate, onWord) {
     const me = ++this.n;
     if ('speechSynthesis' in window) speechSynthesis.cancel();
-    if (!this.el) this.el = new Audio();
-    const src = await this.url(audioKey(text));
+    const c = this.ctx();
+    const buf = await this.buffer(audioKey(text));
     if (me !== this.n) return;
-    const el = this.el;
-    el.pause(); el.src = src;
-    // Vitesse 0,75 (réglage par défaut) = voix enregistrée ralentie à 80 % (jugée trop rapide le 15/11).
-    el.playbackRate = Math.min(1.6, Math.max(0.5, 0.8 * rate / 0.75));
-    el.preservesPitch = el.webkitPreservesPitch = true;
+    if (this.src) { try { this.src.stop(); } catch { /* déjà arrêtée */ } }
+    const s = c.createBufferSource();
+    s.buffer = buf;
+    // Vitesse 0,75 (réglage par défaut) = voix telle qu'enregistrée (déjà ralentie à la génération).
+    const pr = Math.min(1.5, Math.max(0.6, rate / 0.75));
+    s.playbackRate.value = pr;
+    s.connect(c.destination);
     const starts = []; let pos = 0;
     text.split(' ').forEach((w) => { starts.push(pos); pos += w.length + 1; });
-    await el.play();
+    const t0 = c.currentTime;
+    const dur = buf.duration / pr;
+    this.src = s;
+    s.start(0);
     await new Promise((res) => {
       let last = -1;
       const tick = setInterval(() => {
-        if (me !== this.n) { clearInterval(tick); return res(); }
-        const ms = el.currentTime * 1000;
+        const el = c.currentTime - t0;
+        if (me !== this.n || el >= dur + 0.05) { clearInterval(tick); return res(); }
+        const ms = el * pr * 1000;
         let j = -1; for (const [w, t] of marks) if (t <= ms + 60) j = w;
         if (onWord && j !== last && j >= 0) { last = j; onWord(starts[j]); }
-        if (el.ended || el.paused) { clearInterval(tick); res(); }
       }, 50);
     });
+    if (this.src === s) this.src = null;
   },
   // onWord(charIndex) : appelé à chaque mot prononcé, si la voix le signale.
   async say(text, rate = S.rate, onWord) {
@@ -149,13 +160,14 @@ function audioKey(t) {
   for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
   return h.toString(36);
 }
-['touchend', 'click'].forEach((ev) => document.addEventListener(ev, () => Voice.unlock(), { once: true, capture: true }));
+// Débloque le son à chaque toucher (l'iPad peut le suspendre quand l'app passe en arrière-plan).
+['touchend', 'click'].forEach((ev) => document.addEventListener(ev, () => Voice.unlock(), { capture: true }));
 
 // ───────────── Petits sons (sans fichier audio) ─────────────
 let actx;
 function tone(freqs, dur = 0.12) {
   try {
-    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    Voice.ctx();
     freqs.forEach((f, i) => {
       const o = actx.createOscillator(), g = actx.createGain();
       o.type = 'sine'; o.frequency.value = f;
