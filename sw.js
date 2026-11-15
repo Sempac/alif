@@ -1,6 +1,6 @@
 // Cache de l'application pour qu'elle s'ouvre sans internet.
 // Changer VERSION quand la liste SHELL change (et VERSION dans app.js).
-const VERSION = 'alif-v5';
+const VERSION = 'alif-v6';
 const SHELL = [
   './',
   'index.html',
@@ -11,6 +11,7 @@ const SHELL = [
   'data/chars.js',
   'data/images.js',
   'data/words.js',
+  'data/audio.js',
   'motus.js',
   'ordre.js',
   'manifest.webmanifest',
@@ -38,7 +39,10 @@ self.addEventListener('fetch', (e) => {
     if (res.ok) { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(e.request, copy)); }
     return res;
   };
-  if (url.origin === location.origin) {
+  if (url.origin === location.origin && url.pathname.includes('/audio/')) {
+    // Voix enregistrée : gardée en cache après la première écoute (marche ensuite hors ligne).
+    e.respondWith(caches.match(e.request).then((hit) => hit || fetch(e.request).then(save)));
+  } else if (url.origin === location.origin) {
     // Réseau d'abord (dernière version), sinon la copie en cache (hors ligne).
     e.respondWith(fetch(e.request.url, { cache: 'no-cache' }).then(save).catch(() => caches.match(e.request, { ignoreSearch: true })));
   } else if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {

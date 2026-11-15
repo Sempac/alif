@@ -2,7 +2,7 @@
 // Alif — application d'arabe pour Zeydoune.
 // Écrans : accueil, histoires, lettres jumelles, révision, test des lettres, espace parent.
 
-const VERSION = 'alif-v1.7';
+const VERSION = 'alif-v1.8';
 const HERO = 'Zeydoune';
 const KEY = 'alif-data';
 
@@ -56,14 +56,75 @@ const Voice = {
     if (!('speechSynthesis' in window)) return [];
     return speechSynthesis.getVoices().filter((v) => v.lang.toLowerCase().startsWith('ar'));
   },
-  stop() { if ('speechSynthesis' in window) speechSynthesis.cancel(); },
+  stop() {
+    this.n++;
+    if (this.el) this.el.pause();
+    if ('speechSynthesis' in window) speechSynthesis.cancel();
+  },
+  // ── Voix enregistrée (audio/<clé>.mp3, voix neuronale, cf. tools/make_audio.py) ──
+  n: 0, el: null, urls: {},
+  // L'iPad n'autorise le son qu'après un toucher : on « débloque » le lecteur au premier toucher.
+  unlock() {
+    if (this.el) return;
+    this.el = new Audio();
+    const b = new Uint8Array(44 + 800); const d = new DataView(b.buffer);
+    [[0, 'RIFF'], [8, 'WAVEfmt '], [36, 'data']].forEach(([o, s]) => [...s].forEach((c, i) => d.setUint8(o + i, c.charCodeAt(0))));
+    d.setUint32(4, 36 + 800, true); d.setUint32(16, 16, true); d.setUint16(20, 1, true); d.setUint16(22, 1, true);
+    d.setUint32(24, 8000, true); d.setUint32(28, 8000, true); d.setUint16(32, 1, true); d.setUint16(34, 8, true); d.setUint32(40, 800, true);
+    b.fill(128, 44);
+    this.el.src = URL.createObjectURL(new Blob([b], { type: 'audio/wav' }));
+    this.el.play().catch(() => {});
+  },
+  async url(k) {
+    if (!this.urls[k]) {
+      const r = await fetch(`audio/${k}.mp3`);
+      if (!r.ok) throw new Error('audio absent');
+      this.urls[k] = URL.createObjectURL(await r.blob());
+    }
+    return this.urls[k];
+  },
+  async play(text, marks, rate, onWord) {
+    const me = ++this.n;
+    if ('speechSynthesis' in window) speechSynthesis.cancel();
+    if (!this.el) this.el = new Audio();
+    const src = await this.url(audioKey(text));
+    if (me !== this.n) return;
+    const el = this.el;
+    el.pause(); el.src = src;
+    // Vitesse 0,75 (réglage par défaut) = voix telle qu'enregistrée.
+    el.playbackRate = Math.min(1.6, Math.max(0.5, rate / 0.75));
+    el.preservesPitch = el.webkitPreservesPitch = true;
+    const starts = []; let pos = 0;
+    text.split(' ').forEach((w) => { starts.push(pos); pos += w.length + 1; });
+    await el.play();
+    await new Promise((res) => {
+      let last = -1;
+      const tick = setInterval(() => {
+        if (me !== this.n) { clearInterval(tick); return res(); }
+        const ms = el.currentTime * 1000;
+        let j = -1; for (const [w, t] of marks) if (t <= ms + 60) j = w;
+        if (onWord && j !== last && j >= 0) { last = j; onWord(starts[j]); }
+        if (el.ended || el.paused) { clearInterval(tick); res(); }
+      }, 50);
+    });
+  },
   // onWord(charIndex) : appelé à chaque mot prononcé, si la voix le signale.
-  say(text, rate = S.rate, onWord) {
+  async say(text, rate = S.rate, onWord) {
+    text = text.trim();
+    const marks = (window.AUDIO || {})[audioKey(text)];
+    if (marks) {
+      try { return await this.play(text, marks, rate, onWord); } catch (e) { /* hors ligne ou bloqué : voix de l'iPad */ }
+    }
+    return this.tts(text, rate, onWord);
+  },
+  tts(text, rate, onWord) {
     return new Promise((res) => {
       if (!('speechSynthesis' in window)) return res();
       if (!this.v) this.pick();
       speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
+      // Les guillemets « » coupaient la lecture : on les remplace par des espaces
+      // (même longueur, pour garder la position des mots du karaoké) et « : » par une virgule.
+      const u = new SpeechSynthesisUtterance(text.replace(/[«»"“”]/g, ' ').replace(/:/g, '،'));
       u.lang = 'ar-SA'; if (this.v) u.voice = this.v; u.rate = rate;
       let done = false;
       // Safari oublie parfois l'évènement de fin : on continue quand même.
@@ -76,6 +137,13 @@ const Voice = {
   },
 };
 if ('speechSynthesis' in window) { Voice.pick(); speechSynthesis.onvoiceschanged = () => Voice.pick(); }
+// Même fonction que key() dans tools/make_audio.js.
+function audioKey(t) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h.toString(36);
+}
+['touchend', 'click'].forEach((ev) => document.addEventListener(ev, () => Voice.unlock(), { once: true, capture: true }));
 
 // ───────────── Petits sons (sans fichier audio) ─────────────
 let actx;
@@ -564,7 +632,7 @@ function dashboard() {
       ${Voice.v ? `<div class="row">Voix arabe : <select id="voiceSel">${Voice.list().map((v) =>
           `<option value="${v.voiceURI}" ${v === Voice.v ? 'selected' : ''}>${v.name} · ${['normale', 'améliorée', '⭐ Premium'][Voice.quality(v)]} (${v.lang})</option>`).join('')}</select></div>
       <div class="muted" style="font-size:.8em;word-break:break-all">${Voice.v.voiceURI}</div>` : ''}
-      <div class="muted" style="margin-top:8px">Pour une meilleure voix : Réglages de l’iPad › Accessibilité › Lire et énoncer › Voix › Arabe › télécharger une voix « Premium », puis fermer et rouvrir l’app et la choisir ici.</div>
+      <div class="muted" style="margin-top:8px">Les histoires et les mots ont une voix enregistrée (naturelle). La voix de l’iPad ci-dessus ne sert que de secours, pour un texte sans enregistrement.</div>
       <div class="row">Vitesse <input type="range" id="rate" min="0.4" max="1.1" step="0.05" value="${S.rate}"> <span id="rateV">${S.rate}</span>
         <button class="btn alt" id="tryVoice">🔊 Essayer</button></div></div>
     <div class="panel"><h3>Réglages</h3>
@@ -574,7 +642,7 @@ function dashboard() {
   $('#rate').oninput = (e) => { S.rate = +e.target.value; $('#rateV').textContent = S.rate; save(); };
   $('#tryVoice').onclick = () => Voice.say('ذَهَبَ زَيْدُونُ إِلَى الْحَدِيقَةِ');
   if ($('#voiceSel')) $('#voiceSel').onchange = (e) => {
-    S.voice = e.target.value; save(); Voice.pick(); Voice.say('ذَهَبَ زَيْدُونُ إِلَى الْحَدِيقَةِ');
+    S.voice = e.target.value; save(); Voice.pick(); Voice.tts('ذَهَبَ زَيْدُونُ إِلَى الْحَدِيقَةِ', S.rate);
   };
   $('#newPin').onclick = () => { S.pin = null; parentOk = false; save(); parent(); };
   let armed = false;
