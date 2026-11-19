@@ -5,7 +5,7 @@
 window.STORIES = [
   // ───────────── Courtes ─────────────
   {
-    id: 'chatte', t: 'Zeydoune et le petit chat', ar: 'زَيْدُونُ وَالْقِطَّةُ',
+    id: 'chatte', t: 'Zeydoune et le petit chat', ar: 'زَيْدُونُ وَالْقِطُّ الصَّغِيرُ',
     len: 'courte', theme: 'animaux', diff: 1, cover: '🐈',
     pages: [
       ['garden|☀️ 84 4 50 spin-slow|@zeydoune:walk 30 93 72 walk',
