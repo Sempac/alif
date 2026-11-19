@@ -23,7 +23,7 @@ RÈGLE : dans l'histoire de la fourmi, le prophète Soulayman n'est jamais repr�
 Réponds seulement « Prêt ». Je t'enverrai ensuite les scènes une par une."""
 
 STORIES = [
-    ('chatte', 'Zeydoune et la chatte', [
+    ('chatte', 'Zeydoune et le petit chat', [
         "Zeydoune entre joyeusement dans un beau jardin fleuri un matin ensoleillé, avec un grand arbre, des buissons et une allée.",
         "Dans le jardin, Zeydoune découvre une petite chatte rousse tigrée près d'un buisson ; il la montre du doigt, émerveillé.",
         "Gros plan sur la petite chatte rousse assise, l'air triste et affamé, devant une gamelle vide, dans le jardin.",
@@ -140,7 +140,7 @@ button {{ font: inherit; border: 0; background: #ff8a3d; color: #fff; border-rad
 .name {{ margin-top: 8px; font-size: 14px; color: #22806f; }}
 </style></head><body><main>
 <h1>🎨 Images des histoires d'Alif</h1>
-<p>{total} images au total. Commence par <b>Zeydoune et la chatte</b> (5 images) pour valider le style avant de faire le reste.</p>
+<p>{total} images au total. Commence par <b>Zeydoune et le petit chat</b> (5 images) pour valider le style avant de faire le reste.</p>
 <ol class="steps">
 <li>Ouvre une <b>nouvelle conversation</b> dans ChatGPT (ou Gemini) et colle le bloc n° 1.</li>
 <li>Envoie ensuite les pages <b>une par une</b>, dans la même conversation (les personnages restent identiques).</li>
