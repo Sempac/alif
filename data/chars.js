@@ -28,6 +28,11 @@ window.Chars = (() => {
     johafine: { type: 'man', skin: '#d9a57a', head: 'turban', headC: '#ffffff', jewel: true, beard: '#9a9a9a', robe: '#1f7a6d', sash: '#f2c14e' },
     shepherd: { type: 'kid', skin: '#c68b5e', head: 'cap', headC: '#e8572a', robe: '#c9a36a', bottom: '#c9a36a' },
     chief: { type: 'man', skin: '#b07a50', head: 'turban', headC: '#8b1e1e', beard: '#1b120c', robe: '#2b2b2b', sash: '#f2c14e' },
+    hdid: { type: 'kid', skin: '#c68b5e', hair: 'curly', hairC: '#1b120c', top: '#e8572a', bottom: '#2d3e50' },
+    aicha: { type: 'kid', skin: '#d9a57a', head: 'scarf', headC: '#e08a9a', robe: '#f2a0b0', bottom: '#f2a0b0' },
+    stepmom: { type: 'man', skin: '#d9a57a', head: 'scarf', headC: '#7a2e2e', robe: '#4a2c2c', sash: '#7a2e2e' },
+    ghoula: { type: 'man', skin: '#7d9b6a', head: 'scarf', headC: '#3a2a3a', robe: '#4a3a55', sash: '#8b1e1e' },
+    ogre: { type: 'man', skin: '#7d9b6a', head: 'bald', hairC: '#222222', beard: '#2a2a2a', robe: '#4a3a2a', sash: '#8b1e1e' },
   };
 
   // a = [bras gauche, bras droit] (0 = le long du corps, 180 = levé), l = jambes, rot = corps penché

@@ -2,7 +2,7 @@
 // Alif — application d'arabe pour Zeydoune.
 // Écrans : accueil, histoires, lettres jumelles, révision, test des lettres, espace parent.
 
-const VERSION = 'alif-v2.2';
+const VERSION = 'alif-v2.3';
 const HERO = 'Zeydoune';
 const KEY = 'alif-data';
 
